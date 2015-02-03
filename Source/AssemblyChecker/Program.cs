@@ -69,15 +69,19 @@ namespace AssemblyChecker
             dump.Headers.Add("Product");
             dump.Headers.Add("Version");
             dump.Headers.Add("FileVersion");
+            dump.Headers.Add("Configuration");
             dump.Headers.Add("CLR");
 
-            AssemblyProductAttribute product = (AssemblyProductAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyProductAttribute));
+            var productAttribute = (AssemblyProductAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyProductAttribute));
+            var configAttribute = (AssemblyConfigurationAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyConfigurationAttribute));
 
             dump.Data.Add(assembly.GetName().Name);
-            dump.Data.Add(product == null ? string.Empty : product.Product);
+            dump.Data.Add(productAttribute == null ? string.Empty : productAttribute.Product);
             dump.Data.Add(assembly.GetName().Version.ToString());
             dump.Data.Add(FileVersionInfo.GetVersionInfo(assembly.Location).FileVersion);
+            dump.Data.Add(configAttribute == null ? string.Empty : configAttribute.Configuration);
             dump.Data.Add(assembly.ImageRuntimeVersion);
+            
 
             return dump;
         }
