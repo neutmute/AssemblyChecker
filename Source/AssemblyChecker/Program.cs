@@ -27,12 +27,12 @@ namespace AssemblyChecker
 
             Log.Info("Found {0} files to enumerate in {1}", files.Length, referencedAssemblyPath);
 
-            List<string> assemblyExtensions = new List<string> { ".exe", ".dll" };
-            List<Assembly> assemblies = new List<Assembly>();
+            var assemblyExtensions = new List<string> { ".exe", ".dll" };
+            var assemblies = new List<Assembly>();
             
             foreach (string file in files)
             {
-                FileInfo fileInfo = new FileInfo(file);
+                var fileInfo = new FileInfo(file);
                 if (assemblyExtensions.Contains(fileInfo.Extension))
                 {
                     try
@@ -55,7 +55,7 @@ namespace AssemblyChecker
 
             assemblies.Sort((x, y) => x.FullName.CompareTo(y.FullName));
 
-            ObjectDumper<Assembly> objectDumper = new ObjectDumper<Assembly>(GetAssemblyDump);
+            var objectDumper = new ObjectDumper<Assembly>(GetAssemblyDump);
             Log.Info(objectDumper.Dump(assemblies));
 
             Log.Info("Finished");
@@ -63,12 +63,13 @@ namespace AssemblyChecker
 
         public static ObjectDump GetAssemblyDump(Assembly assembly)
         {
-            ObjectDump dump = new ObjectDump();
+            var dump = new ObjectDump();
 
             dump.Headers.Add("Name");
             dump.Headers.Add("Product");
             dump.Headers.Add("Version");
-            dump.Headers.Add("FileVersion");
+            dump.Headers.Add("File Version");
+            dump.Headers.Add("Informational Version");
             dump.Headers.Add("Configuration");
             dump.Headers.Add("CLR");
 
@@ -79,10 +80,10 @@ namespace AssemblyChecker
             dump.Data.Add(productAttribute == null ? string.Empty : productAttribute.Product);
             dump.Data.Add(assembly.GetName().Version.ToString());
             dump.Data.Add(FileVersionInfo.GetVersionInfo(assembly.Location).FileVersion);
+            dump.Data.Add(FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion);
             dump.Data.Add(configAttribute == null ? string.Empty : configAttribute.Configuration);
             dump.Data.Add(assembly.ImageRuntimeVersion);
             
-
             return dump;
         }
     }
