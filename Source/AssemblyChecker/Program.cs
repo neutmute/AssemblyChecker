@@ -73,7 +73,16 @@ namespace AssemblyChecker
             dump.Headers.Add("Configuration");
             dump.Headers.Add("CLR");
 
-            var productAttribute = (AssemblyProductAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyProductAttribute));
+            AssemblyProductAttribute productAttribute = null;
+            try
+            {
+                productAttribute = (AssemblyProductAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyProductAttribute));
+            }
+            catch (Exception e)
+            {
+                Log.ErrorException("Failed to enumerate AssemblyProductAttribute", e);
+            }
+            
             var configAttribute = (AssemblyConfigurationAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyConfigurationAttribute));
 
             dump.Data.Add(assembly.GetName().Name);
