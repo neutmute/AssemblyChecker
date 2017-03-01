@@ -41,8 +41,7 @@ namespace AssemblyChecker
                     }
                     catch (Exception ex)
                     {
-                        Log.InfoException("Failed to load " + fileInfo.Name, ex);
-                        continue;
+                        Log.Info(ex, "Failed to load " + fileInfo.Name);
                     }
                 }
                 else
@@ -80,7 +79,7 @@ namespace AssemblyChecker
             }
             catch (Exception e)
             {
-                Log.ErrorException("Failed to enumerate AssemblyProductAttribute", e);
+                Log.Error(e, "Failed to enumerate AssemblyProductAttribute");
             }
             
             var configAttribute = (AssemblyConfigurationAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyConfigurationAttribute));
