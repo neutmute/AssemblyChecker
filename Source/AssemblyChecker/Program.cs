@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Diagnostics;
-using Kraken.Framework.Core;
+using Kraken.Core;
 using NLog;
 
 namespace AssemblyChecker
