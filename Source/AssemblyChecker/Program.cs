@@ -32,80 +32,14 @@ namespace AssemblyChecker
 
             Log.Info(options.ToString());
 
+            var scanner = new AssemblyScanner();
+            var assemblyEntries = scanner.Scan(options);
+            Log.Info($"Found {assemblyEntries.Count} assembly files in {options.Folder}");
 
-            string referencedAssemblyPath = args[0];
-
-            var assemblyExtensions = new List<string> { ".exe", ".dll" };
-            var searchOption = options.Recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-            var files = Directory
-                                .GetFiles(referencedAssemblyPath, options.AssemblyPattern, searchOption)
-                                .Select(f => new FileInfo(f))
-                                .Where(f => assemblyExtensions.Contains(f.Extension.ToLower()))
-                                .ToList();
-
-
-            var assemblies = new List<Assembly>();
-            
-            Log.Info($"Found {files.Count} assembly files to enumerate in {referencedAssemblyPath}");
-
-            foreach (var fileInfo in files)
-            {
-                try
-                {
-                    assemblies.Add(Assembly.LoadFrom(fileInfo.FullName));
-                }
-                catch (Exception ex)
-                {
-                    Log.Info(ex, "Failed to load " + fileInfo.Name);
-                }
-            }
-
-            assemblies.Sort((x, y) => x.FullName.CompareTo(y.FullName));
-
-            Log.Info("Found {0} assemblies. Proceeding to dump:", assemblies.Count);
-            
-            var objectDumper = new ObjectDumper<Assembly>(GetAssemblyDump);
-            Log.Info(objectDumper.Dump(assemblies));
+            scanner.Dump(assemblyEntries);
 
             Log.Info("Finished");
         }
 
-        public static ObjectDump GetAssemblyDump(Assembly assembly)
-        {
-            var dump = new ObjectDump();
-
-            dump.Headers.Add("Name");
-            dump.Headers.Add("Product");
-            dump.Headers.Add("Version");
-            dump.Headers.Add("File Version");
-            dump.Headers.Add("Informational Version");
-            dump.Headers.Add("Configuration");
-            dump.Headers.Add("CLR");
-            dump.Headers.Add("Path");
-
-            AssemblyProductAttribute productAttribute = null;
-            try
-            {
-                productAttribute = (AssemblyProductAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyProductAttribute));
-            }
-            catch (Exception e)
-            {
-                Log.Error(e, "Failed to enumerate AssemblyProductAttribute");
-            }
-            
-            var configAttribute = (AssemblyConfigurationAttribute)Attribute.GetCustomAttribute(assembly, typeof(AssemblyConfigurationAttribute));
-
-            dump.Data.Add(assembly.GetName().Name);
-            dump.Data.Add(productAttribute == null ? string.Empty : productAttribute.Product);
-            dump.Data.Add(assembly.GetName().Version.ToString());
-            dump.Data.Add(FileVersionInfo.GetVersionInfo(assembly.Location).FileVersion);
-            dump.Data.Add(FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion);
-            dump.Data.Add(configAttribute == null ? string.Empty : configAttribute.Configuration);
-            dump.Data.Add(assembly.ImageRuntimeVersion);
-            dump.Data.Add(Path.GetDirectoryName(assembly.Location));
-
-
-            return dump;
-        }
     }
 }
