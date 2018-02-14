@@ -21,39 +21,49 @@ namespace AssemblyChecker
 
         static void Main(string[] args)
         {
+            var options = new ConsoleOptions(args);
+
+            if (options.ShowHelp)
+            {
+                Console.WriteLine("Options:");
+                options.OptionSet.WriteOptionDescriptions(Console.Out);
+                return;
+            }
+
+            Log.Info(options.ToString());
+
+
             string referencedAssemblyPath = args[0];
 
-            string[] files = Directory.GetFiles(referencedAssemblyPath);
-
-            Log.Info("Found {0} files to enumerate in {1}", files.Length, referencedAssemblyPath);
-
             var assemblyExtensions = new List<string> { ".exe", ".dll" };
+            var searchOption = options.Recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+            var files = Directory
+                                .GetFiles(referencedAssemblyPath, options.AssemblyPattern, searchOption)
+                                .Select(f => new FileInfo(f))
+                                .Where(f => assemblyExtensions.Contains(f.Extension.ToLower()))
+                                .ToList();
+
+
             var assemblies = new List<Assembly>();
             
-            foreach (string file in files)
+            Log.Info($"Found {files.Count} assembly files to enumerate in {referencedAssemblyPath}");
+
+            foreach (var fileInfo in files)
             {
-                var fileInfo = new FileInfo(file);
-                if (assemblyExtensions.Contains(fileInfo.Extension))
+                try
                 {
-                    try
-                    {
-                        assemblies.Add(Assembly.LoadFrom(file));
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Info(ex, "Failed to load " + fileInfo.Name);
-                    }
+                    assemblies.Add(Assembly.LoadFrom(fileInfo.FullName));
                 }
-                else
+                catch (Exception ex)
                 {
-                    Log.Debug("Ignoring {0}", fileInfo.Name);
+                    Log.Info(ex, "Failed to load " + fileInfo.Name);
                 }
             }
 
-            Log.Info("Found {0} assemblies. Proceeding to dump:", assemblies.Count);
-
             assemblies.Sort((x, y) => x.FullName.CompareTo(y.FullName));
 
+            Log.Info("Found {0} assemblies. Proceeding to dump:", assemblies.Count);
+            
             var objectDumper = new ObjectDumper<Assembly>(GetAssemblyDump);
             Log.Info(objectDumper.Dump(assemblies));
 
@@ -71,6 +81,7 @@ namespace AssemblyChecker
             dump.Headers.Add("Informational Version");
             dump.Headers.Add("Configuration");
             dump.Headers.Add("CLR");
+            dump.Headers.Add("Path");
 
             AssemblyProductAttribute productAttribute = null;
             try
@@ -91,7 +102,9 @@ namespace AssemblyChecker
             dump.Data.Add(FileVersionInfo.GetVersionInfo(assembly.Location).ProductVersion);
             dump.Data.Add(configAttribute == null ? string.Empty : configAttribute.Configuration);
             dump.Data.Add(assembly.ImageRuntimeVersion);
-            
+            dump.Data.Add(Path.GetDirectoryName(assembly.Location));
+
+
             return dump;
         }
     }
