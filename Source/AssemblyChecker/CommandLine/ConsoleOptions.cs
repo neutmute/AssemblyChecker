@@ -12,6 +12,8 @@ namespace AssemblyChecker
 
         public string Folder { get; set; }
 
+        public string IncludeFilter { get; set; }
+
         public bool Recurse { get; set; }
 
         public bool ShowHelp { get; set; }
@@ -25,6 +27,7 @@ namespace AssemblyChecker
             OptionSet = new OptionSet {
                 { "f|folder=", "Folder to scan", v => { Folder = v; }},
                 { "p|pattern=", "Filter by assembly name", v => { AssemblyPattern = v; }},
+                { "i|include=", "Include only file paths with this exact match", v => { IncludeFilter = v; }},
                 { "r|recurse", "Recurse", v => { Recurse= true; }},
                 { "h|?:", "Show help", v => ShowHelp = true }
             };
@@ -33,6 +36,11 @@ namespace AssemblyChecker
             if (unprocessed.Count == 1)
             {
                 Folder = unprocessed[0];
+            }
+
+            if (string.IsNullOrEmpty(Folder))
+            {
+                ShowHelp = true;
             }
         }
 
@@ -65,6 +73,11 @@ namespace AssemblyChecker
             if (!string.IsNullOrEmpty(AssemblyPattern))
             {
                 s.AppendFormat($", Assembly={AssemblyPattern}");
+            }
+
+            if (!string.IsNullOrEmpty(IncludeFilter))
+            {
+                s.AppendFormat($", IncludeFilter={IncludeFilter}");
             }
 
             if (Recurse)

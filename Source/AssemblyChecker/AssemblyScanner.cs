@@ -58,6 +58,7 @@ namespace AssemblyChecker
                                 .GetFiles(referencedAssemblyPath, options.AssemblyPattern, searchOption)
                                 .Select(f => new AssemblyEntry(f))
                                 .Where(ae => assemblyExtensions.Contains(ae.FileInfo.Extension.ToLower()))
+                                .Where(ae => string.IsNullOrEmpty(options.IncludeFilter) || ae.FileInfo.FullName.ToLower().Contains(options.IncludeFilter))
                                 .ToList();
 
             foreach (var assemblyEntry in assemblyEntries)
