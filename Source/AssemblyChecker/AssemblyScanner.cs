@@ -16,7 +16,7 @@ namespace AssemblyChecker
         public FileInfo FileInfo { get; set; }
 
         public Assembly Assembly { get; set; }
-
+        
         public AssemblyEntry()
         {
 
@@ -39,6 +39,24 @@ namespace AssemblyChecker
         }
     }
   
+    public class AssemblyReferenceEntry
+    {
+        public AssemblyName AssemblyName { get; set; }
+
+        public List<FileInfo> ReferencedBy { get; set; }
+
+        public override int GetHashCode()
+        {
+            return AssemblyName.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            var objAsThis = obj as AssemblyReferenceEntry;
+            return objAsThis != null && objAsThis.AssemblyName.Equals(AssemblyName);
+        }
+    }
+    
 
     class AssemblyScanner
     {
@@ -65,7 +83,10 @@ namespace AssemblyChecker
             {
                 try
                 {
-                    assemblyEntry.Assembly = Assembly.LoadFrom(assemblyEntry.FileInfo.FullName);
+                    var assembly = Assembly.LoadFrom(assemblyEntry.FileInfo.FullName);
+                    assemblyEntry.Assembly = assembly;
+
+                    assembly.GetReferencedAssemblies();
                 }
                 catch (Exception ex)
                 {
@@ -75,8 +96,39 @@ namespace AssemblyChecker
 
             assemblyEntries.RemoveAll(ae => ae.Assembly == null);
             assemblyEntries.Sort((x, y) => x.Assembly.FullName.CompareTo(y.Assembly.FullName));
-
+            
             return assemblyEntries;
+        }
+
+        public List<AssemblyReferenceEntry> GetReferences(List<AssemblyEntry> entries)
+        {
+            var references = new Dictionary<string, List<FileInfo>>();
+            var assemblyNames = new Dictionary<string, AssemblyName>();
+            foreach (var entry in entries)
+            {
+                var names = entry.Assembly.GetReferencedAssemblies();
+                foreach(var refAssembly in names)
+                {
+                    var assemblyName = refAssembly.FullName;
+                    if (!references.Keys.Contains(assemblyName))
+                    {
+                        references.Add(assemblyName, new List<FileInfo>());
+                        assemblyNames.Add(assemblyName, refAssembly);
+                    }
+                    references[assemblyName].Add(entry.FileInfo);
+                }
+            }
+
+            var refList = new List<AssemblyReferenceEntry>();
+            foreach (var key in references.Keys)
+            {
+                var refEntry = new AssemblyReferenceEntry();
+                refEntry.AssemblyName = assemblyNames[key];
+                refEntry.ReferencedBy = references[key];
+                refList.Add(refEntry);
+            }
+            refList.Sort((x, y) => x.AssemblyName.FullName.CompareTo(y.AssemblyName.FullName));
+            return refList;
         }
 
         public void Dump(List<AssemblyEntry> entries)
@@ -84,8 +136,7 @@ namespace AssemblyChecker
             var objectDumper = new ObjectDumper<AssemblyEntry>(GetAssemblyDump);
             Log.Info(objectDumper.Dump(entries));
         }
-
-
+        
         private static ObjectDump GetAssemblyDump(AssemblyEntry assemblyEntry)
         {
             var dump = new ObjectDump();

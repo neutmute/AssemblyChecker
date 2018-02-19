@@ -10,6 +10,8 @@ namespace AssemblyChecker
     {
         public string AssemblyPattern { get; set; }
 
+        public string ReferenceFilter { get; set; }
+
         public string Folder { get; set; }
 
         public string IncludeFilter { get; set; }
@@ -28,6 +30,7 @@ namespace AssemblyChecker
                 { "f|folder=", "Folder to scan", v => { Folder = v; }},
                 { "p|pattern=", "Filter by assembly name", v => { AssemblyPattern = v; }},
                 { "i|include=", "Include only file paths with this exact match", v => { IncludeFilter = v; }},
+                { "reffilter=", "Report only refernces like this", v => { ReferenceFilter = v; }},
                 { "r|recurse", "Recurse", v => { Recurse= true; }},
                 { "h|?:", "Show help", v => ShowHelp = true }
             };
