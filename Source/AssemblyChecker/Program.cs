@@ -38,20 +38,23 @@ namespace AssemblyChecker
 
             scanner.Dump(assemblyEntries);
 
-            var references = scanner
-                                .GetReferences(assemblyEntries)
-                                .Where(r => r.AssemblyName.FullName.Contains(options.ReferenceFilter))
-                                .ToList();
-
-            var referenceDump = new StringBuilder();
-            foreach(var reference in references)
+            if (!string.IsNullOrEmpty(options.ReferenceFilter))
             {
-                referenceDump.AppendLine($"# {reference.AssemblyName}");
-                var files = reference.ReferencedBy.Select(f => f.FullName).ToCsv("\r\n", f => f);
-                referenceDump.AppendLine($"{files}\r\n");
-            }
+                var references = scanner
+                                    .GetReferences(assemblyEntries)
+                                    .Where(r => r.AssemblyName.FullName.Contains(options.ReferenceFilter))
+                                    .ToList();
 
-            Log.Info($"Reference dump\r\n{referenceDump}");
+                var referenceDump = new StringBuilder();
+                foreach (var reference in references)
+                {
+                    referenceDump.AppendLine($"# {reference.AssemblyName}");
+                    var files = reference.ReferencedBy.Select(f => f.FullName).ToCsv("\r\n", f => f);
+                    referenceDump.AppendLine($"{files}\r\n");
+                }
+
+                Log.Info($"Reference dump\r\n{referenceDump}");
+            }
 
             Log.Info("Finished");
         }
